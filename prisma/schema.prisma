@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String           @id @default(cuid())
+  email          String          @unique
+  name           String?
+  image          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  books          Book[]
+  readingStates  ReadingState[]
+}
+
+model Book {
+  id              String           @id @default(cuid())
+  title           String
+  author          String
+  coverUrl        String?
+  epubUrl         String?
+  isPublicDomain  Boolean         @default(false)
+  uploadedById    String?
+  uploadedBy      User?           @relation(fields: [uploadedById], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  readingStates   ReadingState[]
+  sections        BookSection[]
+  characters      Character[]
+  summaries       Summary[]
+}
+
+model BookSection {
+  id            String    @id @default(cuid())
+  bookId        String
+  book          Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  title         String?
+  content       String    @db.Text
+  orderIndex    Int
+  startPosition Int
+  endPosition   Int
+  createdAt     DateTime  @default(now())
+}
+
+model Character {
+  id               String    @id @default(cuid())
+  bookId           String
+  book             Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?   @db.Text
+  firstAppearance  Int
+  createdAt        DateTime  @default(now())
+}
+
+model ReadingState {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookId           String
+  book             Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  currentPosition  Int       @default(0)
+  progress         Float     @default(0)
+  lastRead         DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, bookId])
+}
+
+model Summary {
+  id          String    @id @default(cuid())
+  bookId      String
+  book        Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  position    Int
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@unique([bookId, position])
+}
