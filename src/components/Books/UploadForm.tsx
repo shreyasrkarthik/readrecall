@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { getAppTheme } from '@/lib/colors';
 
 export function UploadForm() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const appTheme = getAppTheme();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -58,9 +60,9 @@ export function UploadForm() {
           className="group relative flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100"
         >
           <div className="space-y-2 text-center">
-            <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <ArrowUpTrayIcon className={`mx-auto h-12 w-12 ${appTheme.light}`} />
             <div className="text-sm text-gray-600">
-              <span className="font-medium text-blue-600 group-hover:text-blue-700">
+              <span className={`font-medium ${appTheme.primary} group-hover:${appTheme.hover.replace('hover:', '')}`}>
                 Click to upload
               </span>{' '}
               or drag and drop
@@ -80,9 +82,9 @@ export function UploadForm() {
       </div>
 
       {file && (
-        <div className="rounded-md bg-blue-50 p-4">
+        <div className={`rounded-md bg-opacity-10 p-4 ${appTheme.primary.replace('text-', 'bg-')}`}>
           <div className="flex">
-            <div className="flex-1 text-sm text-blue-700">
+            <div className={`flex-1 text-sm ${appTheme.primary}`}>
               Selected file: {file.name}
             </div>
           </div>
@@ -100,7 +102,7 @@ export function UploadForm() {
       <button
         type="submit"
         disabled={!file || uploading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+        className={`w-full rounded-md ${appTheme.gradient} px-4 py-2 text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {uploading ? 'Uploading...' : 'Upload Book'}
       </button>
