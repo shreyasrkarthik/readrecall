@@ -135,8 +135,8 @@ export default function BookPage() {
           </div>
         </div>
       ) : isReading ? (
-        <div className="min-h-screen flex flex-col">
-          <div className="bg-white shadow-sm p-4 flex items-center justify-between">
+        <div className="min-h-screen flex flex-col w-full">
+          <div className="bg-white shadow-sm p-4 flex items-center justify-between w-full border-b border-gray-200">
             <Link href="/books" className="text-teal-600 hover:text-teal-700 flex items-center">
               ← Back to Books
             </Link>
@@ -149,19 +149,88 @@ export default function BookPage() {
             </button>
           </div>
           
-          <div className="flex-1 relative" style={{ minHeight: 'calc(100vh - 64px)' }}>
-            {(() => {
-              // Log outside of JSX to avoid linter errors
-              console.log('📚 Rendering EPUBReader with URL:', getReliableEpubUrl(book));
-              return null;
-            })()}
-            <EPUBReader 
-              url={getReliableEpubUrl(book) || ''} 
-              className="w-full h-full"
-              onProgressUpdate={(progress) => {
-                console.log(`Reading progress: ${Math.round(progress * 100)}%`);
-              }}
-            />
+          {/* Main content area with consistent styling */}
+          <div className="bg-gray-100 w-full px-4 py-6 flex-1">
+            <div className="container mx-auto">
+              {/* EPUBReader Section */}
+              <div className="bg-white rounded-lg shadow-md mb-8 overflow-hidden">
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-gray-800">Reading: {book.title}</h2>
+                  <div className="text-sm text-gray-500">By {book.author}</div>
+                </div>
+                <div className="reader-container p-0" style={{ 
+                  height: 'calc(100vh - 320px)',
+                  minHeight: '500px',
+                  width: '100%',
+                  position: 'relative'
+                }}>
+                  {(() => {
+                    // Log outside of JSX to avoid linter errors
+                    console.log('📚 Rendering EPUBReader with URL:', getReliableEpubUrl(book));
+                    return null;
+                  })()}
+                  <EPUBReader 
+                    url={getReliableEpubUrl(book) || ''} 
+                    className="w-full h-full"
+                    onProgressUpdate={(progress) => {
+                      console.log(`Reading progress: ${Math.round(progress * 100)}%`);
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Summary and Characters Sections */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                {/* Book Summary Section */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Book Summary</h2>
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 mb-3">
+                      {book.title} is a classic work of literature that has captivated readers for generations.
+                    </p>
+                    <p className="text-gray-700 mb-3">
+                      The narrative follows the journey of the main characters through a tumultuous period, 
+                      exploring themes of love, sacrifice, and redemption against the backdrop of significant 
+                      historical events.
+                    </p>
+                    <p className="text-gray-700">
+                      Through vivid descriptions and compelling dialogue, the author creates a rich tapestry of 
+                      experiences that continue to resonate with readers today, making this work a timeless 
+                      exploration of the human condition.
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Characters Section */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Key Characters</h2>
+                  <div className="space-y-4">
+                    <div className="border-b border-gray-200 pb-3">
+                      <h3 className="text-lg font-semibold text-gray-800">Protagonist</h3>
+                      <p className="text-gray-700">
+                        The main character whose journey we follow throughout the narrative, 
+                        facing numerous challenges and experiencing significant growth.
+                      </p>
+                    </div>
+                    <div className="border-b border-gray-200 pb-3">
+                      <h3 className="text-lg font-semibold text-gray-800">Antagonist</h3>
+                      <p className="text-gray-700">
+                        The character who presents obstacles to the protagonist, creating 
+                        tension and conflict that drives the story forward.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">Supporting Characters</h3>
+                      <p className="text-gray-700">
+                        Various individuals who play significant roles in the story, 
+                        providing support, guidance, or additional perspectives that 
+                        enrich the narrative.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (

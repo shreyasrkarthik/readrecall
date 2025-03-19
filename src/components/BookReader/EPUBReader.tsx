@@ -141,7 +141,7 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
         
         const newRendition = newBook.renderTo(viewerRef.current, {
           width: viewerRef.current.clientWidth,
-          height: viewerRef.current.clientHeight || 800, // Fallback height
+          height: viewerRef.current.clientHeight || 600, // Adjusted fallback height
           spread: 'auto',
           flow: 'paginated'
         });
@@ -231,10 +231,54 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
 
   return (
     <div className={`flex flex-col relative ${className}`}>
+      {/* Add global styles for content */}
+      <style jsx global>{`
+        /* Ensure content fills available space */
+        .epub-container {
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
+        
+        /* Make iframe take full height */
+        .epub-container iframe {
+          width: 100% !important;
+          height: 100% !important;
+          border: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        /* Style content within iframe */
+        .epub-container iframe html,
+        .epub-container iframe body {
+          width: 100% !important;
+          height: auto !important;
+          margin: 0 auto !important;
+          padding: 20px !important;
+          font-family: Georgia, serif !important;
+          font-size: 1.1em !important;
+          line-height: 1.6 !important;
+        }
+        
+        /* Add padding to content for readability */
+        .epub-view > div {
+          padding: 0 10px !important;
+        }
+        
+        /* Ensure images scale properly */
+        .epub-container img {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+      `}</style>
+      
       {/* Viewer Area */}
       <div 
         ref={viewerRef} 
-        className="flex-1 min-h-[500px] bg-white"
+        className="w-full h-full bg-white"
       >
         {/* Loading State */}
         {loading && (
@@ -287,7 +331,7 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
           {/* Previous button - left side */}
           <button
             onClick={handlePrev}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 px-3 py-6 bg-black bg-opacity-70 text-white rounded-r-md hover:bg-opacity-90 focus:outline-none transition-all duration-200 shadow-lg"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 px-3 py-6 bg-black bg-opacity-70 text-white rounded-md hover:bg-opacity-90 focus:outline-none transition-all duration-200 shadow-lg z-10"
             aria-label="Previous page"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -298,7 +342,7 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
           {/* Next button - right side */}
           <button
             onClick={handleNext}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 px-3 py-6 bg-black bg-opacity-70 text-white rounded-l-md hover:bg-opacity-90 focus:outline-none transition-all duration-200 shadow-lg"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-6 bg-black bg-opacity-70 text-white rounded-md hover:bg-opacity-90 focus:outline-none transition-all duration-200 shadow-lg z-10"
             aria-label="Next page"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
