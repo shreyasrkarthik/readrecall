@@ -1,24 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY || ''
 });
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession();
-
-  if (!session?.user) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
-  const position = parseInt(searchParams.get('position') || '0');
+  const positionParam = searchParams.get('position') || '0';
+  const position = parseInt(positionParam);
 
   try {
     // First, check if we already have a summary for this position
@@ -74,7 +68,7 @@ export async function GET(
       max_tokens: 500
     });
 
-    const summary = response.choices[0].message.content;
+    const summary = response.choices[0].message.content || '';
 
     // Store the summary in the database
     const newSummary = await prisma.summary.create({

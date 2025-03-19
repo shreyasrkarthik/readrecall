@@ -1,4 +1,3 @@
-import { getServerSession } from 'next-auth';
 import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/db';
@@ -59,18 +58,16 @@ function HorizontalBookCard({ book }: { book: BookWithReadingStates }) {
 }
 
 export default async function BooksPage() {
-  const session = await getServerSession();
   const appTheme = getAppTheme();
   
+  // No authentication required
   const books = await prisma.book.findMany({
     orderBy: {
       updatedAt: 'desc'
     },
     include: {
       readingStates: {
-        where: {
-          userId: session?.user?.id
-        }
+        take: 1
       }
     }
   }) as BookWithReadingStates[];
@@ -104,15 +101,6 @@ export default async function BooksPage() {
               Sort by: <span className="font-medium">Recently Added</span>
             </span>
           </div>
-          
-          {session?.user && (
-            <Link
-              href="/books/upload"
-              className="rounded-lg bg-teal-600 px-4 py-2 text-white shadow-sm hover:bg-teal-700 transition-all duration-200"
-            >
-              Upload Book
-            </Link>
-          )}
         </div>
 
         {books.length === 0 ? (
@@ -127,17 +115,6 @@ export default async function BooksPage() {
               <p className="text-gray-600 mb-6">
                 Our library is currently empty. Check back soon for our growing collection of books.
               </p>
-              {session?.user && (
-                <Link
-                  href="/books/upload"
-                  className={`inline-flex items-center ${appTheme.accent} font-medium ${appTheme.hover}`}
-                >
-                  <span>Upload your first book</span>
-                  <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </Link>
-              )}
             </div>
           </div>
         ) : (
