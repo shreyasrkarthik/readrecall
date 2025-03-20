@@ -29,6 +29,13 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [debugInfo, setDebugInfo] = useState('');
   const [timeoutWarning, setTimeoutWarning] = useState(false);
+  
+  // New state variables for progress tracking
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
+  const [currentChapter, setCurrentChapter] = useState<string>('');
+  const [isFooterExpanded, setIsFooterExpanded] = useState<boolean>(false);
 
   // Debug logger function
   const logDebug = (message: string, obj?: any) => {
@@ -136,31 +143,161 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
         
         logDebug('Creating rendition with dimensions:', {
           width: viewerRef.current.clientWidth,
-          height: viewerRef.current.clientHeight
+          height: viewerRef.current.clientHeight || 600,
         });
         
         const newRendition = newBook.renderTo(viewerRef.current, {
-          width: viewerRef.current.clientWidth,
-          height: viewerRef.current.clientHeight || 600, // Adjusted fallback height
-          spread: 'auto',
+          width: 500,
+          height: viewerRef.current.clientHeight || 600,
+          spread: 'none',
           flow: 'paginated'
+        });
+        
+        // Keep styling approach simple but effective
+        newRendition.hooks.content.register((contents: any) => {
+          // Apply a more comprehensive stylesheet that ensures text is centered
+          contents.addStylesheet(`
+            body {
+              font-family: Georgia, serif;
+              line-height: 1.8;
+              margin: 0 auto;
+              max-width: 800px;
+              padding: 0 40px;
+              text-align: justify;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            
+            p, div, h1, h2, h3, h4, h5, h6, section, article {
+              width: 100%;
+              max-width: 100%;
+              margin-left: auto;
+              margin-right: auto;
+              text-align: justify;
+            }
+            
+            .epub-view > div {
+              margin: 0 auto;
+            }
+            
+            img {
+              max-width: 100%;
+              height: auto;
+              display: block;
+              margin: 0 auto;
+            }
+          `);
+          
+          // Additional direct DOM manipulation to ensure centering
+          if (contents.document.body) {
+            const body = contents.document.body;
+            body.style.margin = "0 auto";
+            body.style.maxWidth = "800px";
+            body.style.textAlign = "justify";
+            
+            // Center all text containers
+            const textContainers = body.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6');
+            textContainers.forEach((el: any) => {
+              el.style.marginLeft = 'auto';
+              el.style.marginRight = 'auto';
+              el.style.maxWidth = '100%';
+              el.style.textAlign = 'justify';
+            });
+          }
         });
         
         setRendition(newRendition);
         logDebug('Rendition created ✅');
+        
+        // Generate locations for better progress tracking first
+        try {
+          logDebug('Generating location points for progress tracking');
+          await newBook.locations.generate(1024); // Using power of 2 for better distribution
+          logDebug(`Generated ${newBook.locations.total} location points`);
+          setTotalPages(newBook.locations.total);
+        } catch (err) {
+          logDebug('Error generating locations:', err);
+        }
         
         logDebug('Displaying content');
         await newRendition.display();
         logDebug('Content displayed ✅');
         
         // Register progress event handler
-        if (onProgressUpdate) {
-          newBook.on('rendition:relocated', (location: any) => {
-            const progress = newBook.locations.percentageFromCfi(location.start.cfi);
-            onProgressUpdate(progress);
-          });
-          logDebug('Progress tracking initialized');
-        }
+        newRendition.on('relocated', (location: any) => {
+          try {
+            // Get the current location information
+            const currentLoc = newBook.locations.locationFromCfi(location.start.cfi);
+            const totalLocs = newBook.locations.total;
+            const percentage = newBook.locations.percentageFromCfi(location.start.cfi);
+            
+            // Update progress
+            setProgress(percentage || 0);
+            if (onProgressUpdate) {
+              onProgressUpdate(percentage || 0);
+            }
+            
+            // Calculate current page
+            const currentPageNum = Math.max(1, Math.round(currentLoc));
+            setCurrentPage(currentPageNum);
+            setTotalPages(totalLocs);
+            
+            logDebug('Location updated:', {
+              currentPage: currentPageNum,
+              totalPages: totalLocs,
+              percentage: Math.round((percentage || 0) * 100) + '%',
+              location: currentLoc
+            });
+            
+            // Try to get chapter information
+            if (location.start.href) {
+              const chapter = newBook.spine.get(location.start.href);
+              if (chapter && chapter.label) {
+                setCurrentChapter(chapter.label);
+              } else {
+                const spinePosition = newBook.spine.spineItems.findIndex(
+                  (item: any) => item.href === location.start.href
+                );
+                setCurrentChapter(`Chapter ${spinePosition + 1}`);
+              }
+            }
+          } catch (err) {
+            logDebug('Error updating progress:', err);
+          }
+        });
+
+        // Handle page changes
+        newRendition.on('rendered', (section: any) => {
+          updateProgress();
+        });
+        
+        // Setup event listeners for navigation and display
+        newRendition.on('keyup', (event: KeyboardEvent) => {
+          if (event.key === 'ArrowRight') {
+            newRendition.next();
+          }
+          if (event.key === 'ArrowLeft') {
+            newRendition.prev();
+          }
+        });
+        
+        // Register touch events for swipe navigation
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        viewerRef.current.addEventListener('touchstart', (e: TouchEvent) => {
+          touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        viewerRef.current.addEventListener('touchend', (e: TouchEvent) => {
+          touchEndX = e.changedTouches[0].screenX;
+          if (touchStartX - touchEndX > 50) {
+            newRendition.next();
+          } else if (touchEndX - touchStartX > 50) {
+            newRendition.prev();
+          }
+        }, { passive: true });
         
         clearTimeout(timeoutId);
         setTimeoutWarning(false);
@@ -194,7 +331,7 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
       if (viewerRef.current && rendition) {
         logDebug('Window resized, updating rendition dimensions');
         rendition.resize(
-          viewerRef.current.clientWidth,
+          500,
           viewerRef.current.clientHeight || 800
         );
       }
@@ -204,18 +341,64 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
     return () => window.removeEventListener('resize', handleResize);
   }, [rendition]);
 
-  // Navigation handlers
+  // Navigation handlers - simplify to the bare minimum
   const handlePrev = () => {
     if (rendition) {
-      logDebug('Navigating to previous page');
       rendition.prev();
+      updateProgress();
     }
   };
 
   const handleNext = () => {
     if (rendition) {
-      logDebug('Navigating to next page');
       rendition.next();
+      updateProgress();
+    }
+  };
+
+  // Update progress helper function
+  const updateProgress = () => {
+    if (!book || !rendition) return;
+
+    try {
+      const location = rendition.location.start;
+      if (!location) return;
+
+      const currentLoc = book.locations.locationFromCfi(location.cfi);
+      const totalLocs = book.locations.total;
+      const percentage = book.locations.percentageFromCfi(location.cfi);
+
+      setProgress(percentage || 0);
+      if (onProgressUpdate) {
+        onProgressUpdate(percentage || 0);
+      }
+
+      // Calculate current page
+      const currentPageNum = Math.max(1, Math.round(currentLoc));
+      setCurrentPage(currentPageNum);
+      setTotalPages(totalLocs);
+
+      logDebug('Progress updated:', {
+        currentPage: currentPageNum,
+        totalPages: totalLocs,
+        percentage: Math.round((percentage || 0) * 100) + '%',
+        location: currentLoc
+      });
+
+      // Update chapter information
+      if (location.href) {
+        const chapter = book.spine.get(location.href);
+        if (chapter && chapter.label) {
+          setCurrentChapter(chapter.label);
+        } else {
+          const spinePosition = book.spine.spineItems.findIndex(
+            (item: any) => item.href === location.href
+          );
+          setCurrentChapter(`Chapter ${spinePosition + 1}`);
+        }
+      }
+    } catch (err) {
+      logDebug('Error updating progress:', err);
     }
   };
 
@@ -227,6 +410,41 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
     setLoading(true);
     setError(null);
     setTimeoutWarning(false);
+  };
+
+  // Toggle footer expansion
+  const toggleFooter = () => {
+    setIsFooterExpanded(!isFooterExpanded);
+    
+    // Auto-collapse after 4 seconds if expanded
+    if (!isFooterExpanded) {
+      const timer = setTimeout(() => {
+        setIsFooterExpanded(false);
+      }, 4000);
+      
+      return () => clearTimeout(timer);
+    }
+  };
+  
+  // Handle slider change for navigation
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!book || !rendition) return;
+    
+    const newProgress = parseFloat(e.target.value) / 100;
+    
+    try {
+      // Navigate to the position
+      if (book.locations && book.locations.total) {
+        const cfi = book.locations.cfiFromPercentage(newProgress);
+        if (cfi) {
+          rendition.display(cfi).then(() => {
+            updateProgress();
+          });
+        }
+      }
+    } catch (err) {
+      logDebug('Error navigating with slider:', err);
+    }
   };
 
   return (
@@ -251,34 +469,118 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
           padding: 0 !important;
         }
         
-        /* Style content within iframe */
-        .epub-container iframe html,
-        .epub-container iframe body {
-          width: 100% !important;
-          height: auto !important;
-          margin: 0 auto !important;
-          padding: 20px !important;
-          font-family: Georgia, serif !important;
-          font-size: 1.1em !important;
-          line-height: 1.6 !important;
+        /* Simple, clean styling for better performance */
+        .epub-view {
+          background-color: white;
         }
         
-        /* Add padding to content for readability */
-        .epub-view > div {
-          padding: 0 10px !important;
+        /* Progress bar styles */
+        .progress-container {
+          height: 4px;
+          background-color: rgba(229, 231, 235, 0.8);
+          cursor: pointer;
+          transition: height 0.3s ease;
+          position: relative;
+          z-index: 20;
+          margin-bottom: 0;
         }
         
-        /* Ensure images scale properly */
-        .epub-container img {
-          max-width: 100% !important;
-          height: auto !important;
+        .progress-container:hover {
+          height: 8px;
+        }
+        
+        .progress-bar {
+          height: 100%;
+          background-color: #000;
+          transition: width 0.3s ease;
+        }
+        
+        .reader-footer {
+          background-color: rgba(255, 255, 255, 0.95);
+          transform: translateY(0);
+          transition: transform 0.3s ease, height 0.3s ease;
+          z-index: 20;
+          box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+          padding-bottom: env(safe-area-inset-bottom, 12px);
+          min-height: 32px;
+        }
+        
+        .reader-footer.collapsed {
+          transform: translateY(100%);
+        }
+        
+        .reader-footer-content {
+          padding: 12px 16px 4px;
+          background-color: rgba(255, 255, 255, 0.95);
+        }
+        
+        /* Always visible mini footer */
+        .mini-footer {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 8px 16px;
+          background-color: rgba(255, 255, 255, 0.95);
+          z-index: 19;
+          border-top: 1px solid rgba(229, 231, 235, 0.8);
+          margin-top: 1px;
+        }
+        
+        .progress-slider {
+          -webkit-appearance: none;
+          height: 4px;
+          border-radius: 2px;
+          background: #e5e7eb;
+          outline: none;
+          transition: all 0.3s ease;
+        }
+        
+        .progress-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #000;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .progress-slider::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+        }
+        
+        .progress-slider::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #000;
+          cursor: pointer;
+          border: none;
+          transition: all 0.2s ease;
+        }
+        
+        .progress-slider::-moz-range-thumb:hover {
+          transform: scale(1.2);
+        }
+        
+        /* Chapter marker styles */
+        .chapter-marker {
+          width: 2px;
+          height: 8px;
+          background-color: rgba(0, 0, 0, 0.3);
+          position: absolute;
+          bottom: 0;
+          transform: translateX(-50%);
         }
       `}</style>
       
-      {/* Viewer Area */}
+      {/* Viewer Area - Added padding-bottom to make room for progress bar */}
       <div 
         ref={viewerRef} 
-        className="w-full h-full bg-white"
+        className="w-full h-full bg-white pb-12"
+        style={{ position: 'relative' }}
       >
         {/* Loading State */}
         {loading && (
@@ -349,6 +651,59 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
+          
+          {/* Progress Footer - Fixed positioning at the bottom of the container */}
+          <div className="absolute bottom-0 left-0 right-0 z-20">
+            {/* Progress Bar and Footer Container */}
+            <div className="bg-white">
+              {/* Thin Progress Bar (Always Visible) */}
+              <div 
+                className="progress-container w-full"
+                onClick={toggleFooter}
+              >
+                <div 
+                  className="progress-bar" 
+                  style={{ width: `${progress * 100}%` }}
+                ></div>
+              </div>
+              
+              {/* Always visible mini footer */}
+              <div className="mini-footer">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm font-medium text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <div className="text-sm font-medium text-gray-700">
+                    {Math.round(progress * 100)}% Complete
+                  </div>
+                </div>
+              </div>
+              
+              {/* Expandable Footer with Details */}
+              <div className={`reader-footer ${isFooterExpanded ? '' : 'h-0 overflow-hidden'}`}>
+                <div className="reader-footer-content">
+                  {/* Middle Row: Current Chapter */}
+                  {currentChapter && (
+                    <div className="text-sm text-gray-600 mb-3">
+                      <span className="font-medium">Current Chapter:</span> {currentChapter}
+                    </div>
+                  )}
+                  
+                  {/* Bottom Row: Interactive Slider */}
+                  <div className="relative w-full px-1">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={progress * 100}
+                      onChange={handleSliderChange}
+                      className="progress-slider w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </>
       )}
     </div>

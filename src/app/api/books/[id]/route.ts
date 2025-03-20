@@ -6,15 +6,17 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log('Attempting to fetch book with ID:', params.id);
+    // Ensure params is properly handled
+    const id = params?.id;
+    console.log('Attempting to fetch book with ID:', id);
     
-    if (!params.id) {
+    if (!id) {
       console.error('Missing book ID parameter');
       return new NextResponse('Missing book ID', { status: 400 });
     }
     
     const book = await prisma.book.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         readingStates: {
           take: 1 // Just get one reading state for display purposes
@@ -26,7 +28,7 @@ export async function GET(
     });
 
     if (!book) {
-      console.log(`Book not found with ID: ${params.id}`);
+      console.log(`Book not found with ID: ${id}`);
       return new NextResponse('Book not found', { status: 404 });
     }
 
