@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,6 +23,101 @@ interface Book {
 
 // For testing, use a known working EPUB URL if a book's URL is missing
 const FALLBACK_EPUB_URL = 'https://s3.amazonaws.com/moby-dick/moby-dick.epub';
+
+// Create a memoized version of the EPUBReader component
+const MemoizedEPUBReader = memo(({ url, className, onProgressUpdate }: { 
+  url: string, 
+  className: string, 
+  onProgressUpdate: (progress: number) => void 
+}) => {
+  console.log('📚 Rendering Memoized EPUBReader with URL:', url);
+  return (
+    <EPUBReader 
+      url={url} 
+      className={className}
+      onProgressUpdate={onProgressUpdate}
+    />
+  );
+});
+MemoizedEPUBReader.displayName = 'MemoizedEPUBReader';
+
+// Create a separate component for the Summary section to isolate state changes
+const SummarySection = memo(({ book }: { book: Book }) => {
+  const [showSummary, setShowSummary] = useState(false);
+  
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-800">Book Summary</h2>
+        <button 
+          onClick={() => setShowSummary(!showSummary)}
+          className="px-3 py-1 text-sm rounded border border-gray-300 bg-black text-white hover:bg-gray-800 transition-colors"
+        >
+          {showSummary ? 'Hide Summary' : 'Show Summary'}
+        </button>
+      </div>
+      
+      <div className="prose max-w-none">
+        {showSummary ? (
+          <>
+            <p className="text-gray-700 mb-3">
+              {book.title} is a classic work of literature that has captivated readers for generations.
+            </p>
+            <p className="text-gray-700 mb-3">
+              The narrative follows the journey of the main characters through a tumultuous period, 
+              exploring themes of love, sacrifice, and redemption against the backdrop of significant 
+              historical events.
+            </p>
+            <p className="text-gray-700">
+              Through vivid descriptions and compelling dialogue, the author creates a rich tapestry of 
+              experiences that continue to resonate with readers today, making this work a timeless 
+              exploration of the human condition.
+            </p>
+          </>
+        ) : (
+          <p className="text-gray-500 italic text-center py-8">
+            Click "Show Summary" to view the book summary.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+});
+SummarySection.displayName = 'SummarySection';
+
+// Create a separate component for the Characters section
+const CharactersSection = memo(() => {
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">Key Characters</h2>
+      <div className="space-y-4">
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-lg font-semibold text-gray-800">Protagonist</h3>
+          <p className="text-gray-700">
+            The main character whose journey we follow throughout the narrative, 
+            facing numerous challenges and experiencing significant growth.
+          </p>
+        </div>
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-lg font-semibold text-gray-800">Antagonist</h3>
+          <p className="text-gray-700">
+            The character who presents obstacles to the protagonist, creating 
+            tension and conflict that drives the story forward.
+          </p>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800">Supporting Characters</h3>
+          <p className="text-gray-700">
+            Various individuals who play significant roles in the story, 
+            providing support, guidance, or additional perspectives that 
+            enrich the narrative.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+CharactersSection.displayName = 'CharactersSection';
 
 export default function BookPage() {
   const params = useParams();
@@ -117,6 +212,11 @@ export default function BookPage() {
     return () => clearTimeout(timer);
   }, []);
   
+  // Memoize the progress update handler to prevent recreating on each render
+  const handleProgressUpdate = useCallback((progress: number) => {
+    console.log(`Reading progress: ${Math.round(progress * 100)}%`);
+  }, []);
+  
   return (
     <>
       <EPUBScript />
@@ -166,15 +266,13 @@ export default function BookPage() {
                 }}>
                   {(() => {
                     // Log outside of JSX to avoid linter errors
-                    console.log('📚 Rendering EPUBReader with URL:', getReliableEpubUrl(book));
+                    console.log('📚 Preparing to render EPUBReader with URL:', getReliableEpubUrl(book));
                     return null;
                   })()}
-                  <EPUBReader 
+                  <MemoizedEPUBReader 
                     url={getReliableEpubUrl(book) || ''} 
                     className="w-full h-full"
-                    onProgressUpdate={(progress) => {
-                      console.log(`Reading progress: ${Math.round(progress * 100)}%`);
-                    }}
+                    onProgressUpdate={handleProgressUpdate}
                   />
                 </div>
               </div>
@@ -182,53 +280,10 @@ export default function BookPage() {
               {/* Summary and Characters Sections */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 {/* Book Summary Section */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Book Summary</h2>
-                  <div className="prose max-w-none">
-                    <p className="text-gray-700 mb-3">
-                      {book.title} is a classic work of literature that has captivated readers for generations.
-                    </p>
-                    <p className="text-gray-700 mb-3">
-                      The narrative follows the journey of the main characters through a tumultuous period, 
-                      exploring themes of love, sacrifice, and redemption against the backdrop of significant 
-                      historical events.
-                    </p>
-                    <p className="text-gray-700">
-                      Through vivid descriptions and compelling dialogue, the author creates a rich tapestry of 
-                      experiences that continue to resonate with readers today, making this work a timeless 
-                      exploration of the human condition.
-                    </p>
-                  </div>
-                </div>
+                {book && <SummarySection book={book} />}
                 
                 {/* Characters Section */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Key Characters</h2>
-                  <div className="space-y-4">
-                    <div className="border-b border-gray-200 pb-3">
-                      <h3 className="text-lg font-semibold text-gray-800">Protagonist</h3>
-                      <p className="text-gray-700">
-                        The main character whose journey we follow throughout the narrative, 
-                        facing numerous challenges and experiencing significant growth.
-                      </p>
-                    </div>
-                    <div className="border-b border-gray-200 pb-3">
-                      <h3 className="text-lg font-semibold text-gray-800">Antagonist</h3>
-                      <p className="text-gray-700">
-                        The character who presents obstacles to the protagonist, creating 
-                        tension and conflict that drives the story forward.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Supporting Characters</h3>
-                      <p className="text-gray-700">
-                        Various individuals who play significant roles in the story, 
-                        providing support, guidance, or additional perspectives that 
-                        enrich the narrative.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <CharactersSection />
               </div>
             </div>
           </div>
