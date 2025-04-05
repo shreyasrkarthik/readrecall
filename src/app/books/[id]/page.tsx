@@ -84,10 +84,10 @@ const SummarySection = memo(({ book, currentPosition }: { book: Book, currentPos
     };
     
     // If summary is visible, fetch it
-    if (showSummary && !summaryContent && !loading) {
+    if (showSummary) {
       fetchSummary();
     }
-  }, [book?.id, currentPosition, showSummary, summaryContent, loading]);
+  }, [book?.id, currentPosition, showSummary]);
   
   // Format the reading progress for display
   const formattedProgress = Math.round((currentPosition / 10000) * 100);
