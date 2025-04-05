@@ -47,6 +47,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   books         Book[]
+  readingStates ReadingState[]
 }
 
 model VerificationToken {
@@ -70,6 +71,8 @@ model Book {
   updatedAt       DateTime      @updatedAt
   sections        BookSection[]
   summaries       Summary[]
+  characters      Character[]
+  readingStates   ReadingState[]
 }
 
 model BookSection {
@@ -85,28 +88,23 @@ model BookSection {
 }
 
 model Character {
-  id              String   @id @default(cuid())
-  bookId          String
-  name            String
-  description     String?
-  firstAppearance Int
-  createdAt       DateTime @default(now())
-  book            Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  bookId    String
+  name      String
+  description String @db.Text
+  createdAt DateTime @default(now())
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
 }
 
 model ReadingState {
-  id              String   @id @default(cuid())
-  userId          String
-  bookId          String
-  currentPosition Int      @default(0)
-  progress        Float    @default(0)
-  lastRead        DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  book            Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, bookId])
+  id        String   @id @default(cuid())
+  bookId    String
+  userId    String
+  position  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Summary {
