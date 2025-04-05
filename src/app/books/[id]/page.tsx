@@ -42,15 +42,67 @@ const MemoizedEPUBReader = memo(({ url, className, onProgressUpdate }: {
 MemoizedEPUBReader.displayName = 'MemoizedEPUBReader';
 
 // Create a separate component for the Summary section to isolate state changes
-const SummarySection = memo(({ book }: { book: Book }) => {
+const SummarySection = memo(({ book, currentPosition }: { book: Book, currentPosition: number }) => {
   const [showSummary, setShowSummary] = useState(false);
+  const [summaryContent, setSummaryContent] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch summary when the component mounts or when position changes
+  useEffect(() => {
+    // Clear any previous errors when position changes
+    setError(null);
+    
+    const fetchSummary = async () => {
+      if (!book?.id || !showSummary) return;
+      
+      try {
+        setLoading(true);
+        
+        console.log(`Fetching summary for book ${book.id} at position ${currentPosition}`);
+        
+        // Call the summary API with the current position
+        const response = await fetch(`/api/books/${book.id}/summary?position=${currentPosition}`, {
+          cache: 'no-store'
+        });
+        
+        // Parse response as JSON
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        // Valid summary response
+        setSummaryContent(data.content || '');
+      } catch (err) {
+        console.error('Error fetching summary:', err);
+        setError('We couldn\'t load the summary right now. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // If summary is visible, fetch it
+    if (showSummary && !summaryContent && !loading) {
+      fetchSummary();
+    }
+  }, [book?.id, currentPosition, showSummary, summaryContent, loading]);
+  
+  // Format the reading progress for display
+  const formattedProgress = Math.round((currentPosition / 10000) * 100);
+  
+  // Handle toggle click - fetch summary if not already fetched
+  const handleToggleClick = () => {
+    setShowSummary(!showSummary);
+  };
   
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800">Book Summary</h2>
         <button 
-          onClick={() => setShowSummary(!showSummary)}
+          onClick={handleToggleClick}
           className="px-3 py-1 text-sm rounded border border-gray-300 bg-black text-white hover:bg-gray-800 transition-colors"
         >
           {showSummary ? 'Hide Summary' : 'Show Summary'}
@@ -60,23 +112,40 @@ const SummarySection = memo(({ book }: { book: Book }) => {
       <div className="prose max-w-none">
         {showSummary ? (
           <>
-            <p className="text-gray-700 mb-3">
-              {book.title} is a classic work of literature that has captivated readers for generations.
-            </p>
-            <p className="text-gray-700 mb-3">
-              The narrative follows the journey of the main characters through a tumultuous period, 
-              exploring themes of love, sacrifice, and redemption against the backdrop of significant 
-              historical events.
-            </p>
-            <p className="text-gray-700">
-              Through vivid descriptions and compelling dialogue, the author creates a rich tapestry of 
-              experiences that continue to resonate with readers today, making this work a timeless 
-              exploration of the human condition.
-            </p>
+            {currentPosition > 0 && (
+              <div className="mb-4 text-sm text-gray-500 italic border-b border-gray-200 pb-2">
+                Summary up to {formattedProgress}% of the book
+              </div>
+            )}
+            
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-800"></div>
+                <p className="mt-2 text-gray-600">Loading summary...</p>
+              </div>
+            ) : error ? (
+              <div className="py-4">
+                <p className="text-red-500 mb-2">{error}</p>
+              </div>
+            ) : summaryContent ? (
+              <div className="text-gray-700">
+                {summaryContent.split('\n').map((paragraph, index) => (
+                  <p key={index} className={index < summaryContent.split('\n').length - 1 ? 'mb-3' : ''}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic text-center py-8">
+                {currentPosition === 0 
+                  ? 'Start reading to see a summary of the book.' 
+                  : 'No summary available for your current reading position.'}
+              </p>
+            )}
           </>
         ) : (
           <p className="text-gray-500 italic text-center py-8">
-            Click "Show Summary" to view the book summary.
+            Click "Show Summary" to view a summary up to your current reading position.
           </p>
         )}
       </div>
@@ -86,33 +155,47 @@ const SummarySection = memo(({ book }: { book: Book }) => {
 SummarySection.displayName = 'SummarySection';
 
 // Create a separate component for the Characters section
-const CharactersSection = memo(() => {
+const CharactersSection = memo(({ book, currentPosition }: { book: Book | null, currentPosition: number }) => {
+  const [showCharacters, setShowCharacters] = useState(false);
+  
+  // Format the reading progress for display
+  const formattedProgress = Math.round((currentPosition / 10000) * 100);
+  
+  // Handle toggle click
+  const handleToggleClick = () => {
+    setShowCharacters(!showCharacters);
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Key Characters</h2>
-      <div className="space-y-4">
-        <div className="border-b border-gray-200 pb-3">
-          <h3 className="text-lg font-semibold text-gray-800">Protagonist</h3>
-          <p className="text-gray-700">
-            The main character whose journey we follow throughout the narrative, 
-            facing numerous challenges and experiencing significant growth.
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-800">Key Characters</h2>
+        <button 
+          onClick={handleToggleClick}
+          className="px-3 py-1 text-sm rounded border border-gray-300 bg-black text-white hover:bg-gray-800 transition-colors"
+        >
+          {showCharacters ? 'Hide Characters' : 'Show Characters'}
+        </button>
+      </div>
+      
+      <div className="prose max-w-none">
+        {showCharacters ? (
+          <>
+            {currentPosition > 0 && (
+              <div className="mb-4 text-sm text-gray-500 italic border-b border-gray-200 pb-2">
+                Characters up to {formattedProgress}% of the book
+              </div>
+            )}
+            
+            <p className="text-gray-500 italic text-center py-8">
+              Character information feature is currently under development. Check back soon!
+            </p>
+          </>
+        ) : (
+          <p className="text-gray-500 italic text-center py-8">
+            Click "Show Characters" to view characters encountered up to your current reading position.
           </p>
-        </div>
-        <div className="border-b border-gray-200 pb-3">
-          <h3 className="text-lg font-semibold text-gray-800">Antagonist</h3>
-          <p className="text-gray-700">
-            The character who presents obstacles to the protagonist, creating 
-            tension and conflict that drives the story forward.
-          </p>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800">Supporting Characters</h3>
-          <p className="text-gray-700">
-            Various individuals who play significant roles in the story, 
-            providing support, guidance, or additional perspectives that 
-            enrich the narrative.
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -128,6 +211,7 @@ export default function BookPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReading, setIsReading] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState<number>(0);
   
   useEffect(() => {
     const fetchBook = async () => {
@@ -215,7 +299,15 @@ export default function BookPage() {
   // Memoize the progress update handler to prevent recreating on each render
   const handleProgressUpdate = useCallback((progress: number) => {
     console.log(`Reading progress: ${Math.round(progress * 100)}%`);
-  }, []);
+    
+    // Update current position when progress changes
+    if (book) {
+      // Estimate position based on progress percentage
+      // This is a simplification - ideally we would get the actual position from the reader
+      const estimatedPosition = Math.round(progress * 10000); // Scale to a reasonable number
+      setCurrentPosition(estimatedPosition);
+    }
+  }, [book]);
   
   return (
     <>
@@ -280,10 +372,10 @@ export default function BookPage() {
               {/* Summary and Characters Sections */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 {/* Book Summary Section */}
-                {book && <SummarySection book={book} />}
+                {book && <SummarySection book={book} currentPosition={currentPosition} />}
                 
                 {/* Characters Section */}
-                <CharactersSection />
+                <CharactersSection book={book} currentPosition={currentPosition} />
               </div>
             </div>
           </div>

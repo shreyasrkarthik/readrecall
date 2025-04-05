@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Summary } from '@/types';
 
 interface BookSummaryProps {
@@ -38,11 +38,18 @@ export function BookSummary({
     }
   };
 
+  // Auto-fetch summary when position changes
+  useEffect(() => {
+    if (bookId && currentPosition > 0) {
+      fetchSummary();
+    }
+  }, [bookId, currentPosition]);
+
   return (
     <div className={`bg-white rounded-lg shadow-lg p-6 ${className}`}>
       <h2 className="text-2xl font-bold mb-4">Story So Far</h2>
 
-      {!summary && !loading && (
+      {!summary && !loading && currentPosition > 0 && (
         <button
           onClick={fetchSummary}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -70,6 +77,12 @@ export function BookSummary({
             Last updated: {new Date(summary.createdAt).toLocaleDateString()}
           </div>
         </div>
+      )}
+
+      {!summary && !loading && !error && currentPosition === 0 && (
+        <p className="text-gray-500 italic text-center py-8">
+          Start reading to see a summary of the book.
+        </p>
       )}
     </div>
   );
