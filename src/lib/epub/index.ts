@@ -62,8 +62,8 @@ export async function processEpub(url: string): Promise<{
 }
 
 export function calculateReadingProgress(
-  currentPosition: number,
+  position: number,
   totalWords: number
 ): number {
-  return Math.min(Math.round((currentPosition / totalWords) * 100), 100);
+  return Math.min(Math.round((position / totalWords) * 100), 100);
 } 

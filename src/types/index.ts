@@ -41,9 +41,7 @@ export type ReadingState = {
   id: string;
   userId: string;
   bookId: string;
-  currentPosition: number;
-  progress: number;
-  lastRead: Date;
+  position: number;
   createdAt: Date;
   updatedAt: Date;
 };

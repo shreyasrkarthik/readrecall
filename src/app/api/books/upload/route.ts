@@ -47,8 +47,7 @@ export async function POST(request: Request) {
       data: {
         userId: session.user.id,
         bookId: book.id,
-        currentPosition: 0,
-        progress: 0
+        position: 0
       }
     });
 

@@ -1,0 +1,21 @@
+# Build artifacts
+.next/
+out/
+build/
+dist/
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env*
+
+# TypeScript declaration files
+*.d.ts
+
+# Public assets
+public/
+
+# Generated files
+.vercel
+*.generated.* 

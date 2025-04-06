@@ -10,8 +10,7 @@ export async function GET(
     const mockProgress = {
       userId: 'anonymous',
       bookId: params.id,
-      currentPosition: 0,
-      progress: 0,
+      position: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -29,14 +28,13 @@ export async function POST(
 ) {
   try {
     const data = await request.json();
-    const { progress, currentPosition } = data;
+    const { position } = data;
 
     // No need to store progress, just acknowledge receipt
     return NextResponse.json({
       userId: 'anonymous',
       bookId: params.id,
-      currentPosition,
-      progress,
+      position,
       updatedAt: new Date()
     });
   } catch (error) {

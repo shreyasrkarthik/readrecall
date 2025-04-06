@@ -5,13 +5,11 @@ export async function GET(
   request: Request,
   context: { params: { id: string } }
 ) {
-  console.log('Summary API called with params:', context.params);
-  
   try {
     const { searchParams } = new URL(request.url);
     const positionParam = searchParams.get('position') || '0';
     const position = parseInt(positionParam);
-    const bookId = context.params.id;
+    const { id: bookId } = await context.params;
     
     console.log('Processing request:', { bookId, position });
 
@@ -48,7 +46,7 @@ export async function GET(
     return NextResponse.json(
       { 
         id: 'error', 
-        bookId: context.params.id || 'unknown', 
+        bookId: (await context.params).id || 'unknown', 
         position: 0, 
         content: 'We encountered an error retrieving the summary. Please try again later.', 
         error: error instanceof Error ? error.message : 'Unknown error'
