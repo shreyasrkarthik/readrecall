@@ -85,6 +85,7 @@ const SummarySection = memo(({ book, currentPosition }: { book: Book, currentPos
     
     fetchSummary();
   }, [book?.id, currentPosition]);
+
   
   // Format the reading progress for display
   const formattedProgress = Math.round((currentPosition / 10000) * 100);
