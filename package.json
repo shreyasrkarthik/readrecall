@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "setup": "cp -n .env.example .env || true && npm install && npx prisma generate && echo 'Setup complete! Remember to update your .env file with your credentials.'"
   },
   "dependencies": {
-    "@auth/core": "^0.34.2",
+    "@auth/core": "^0.38.0",
     "@auth/prisma-adapter": "^2.8.0",
     "@heroicons/react": "^2.1.1",
     "@prisma/client": "^5.10.2",
@@ -31,7 +32,6 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss7-compat": "^2.2.17",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
     "eslint": "^8.56.0",

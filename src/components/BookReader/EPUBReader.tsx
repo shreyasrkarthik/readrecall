@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Global declaration for TypeScript
 declare global {
@@ -38,16 +38,18 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
   const [isFooterExpanded, setIsFooterExpanded] = useState<boolean>(false);
 
   // Debug logger function
-  const logDebug = (message: string, obj?: any) => {
+  const logDebug = useCallback((message: string, obj?: any) => {
     const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
     const logMessage = `[${timestamp}] 📚 ${message}`;
     console.log(logMessage, obj !== undefined ? obj : '');
     setDebugInfo(prev => `${prev}\n${logMessage}`);
     return logMessage;
-  };
+  }, []);
 
   // Load required scripts
   useEffect(() => {
+    if (!url) return;
+    
     const loadScripts = async () => {
       try {
         // Check if scripts are already loaded
@@ -102,7 +104,53 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
     };
     
     loadScripts();
-  }, []);
+  }, [url, logDebug]);
+
+  // Update progress helper function
+  const updateProgress = useCallback(() => {
+    if (!book || !rendition) return;
+
+    try {
+      const location = rendition.location.start;
+      if (!location) return;
+
+      const currentLoc = book.locations.locationFromCfi(location.cfi);
+      const totalLocs = book.locations.total;
+      const percentage = book.locations.percentageFromCfi(location.cfi);
+
+      setProgress(percentage || 0);
+      if (onProgressUpdate) {
+        onProgressUpdate(percentage || 0);
+      }
+
+      // Calculate current page
+      const currentPageNum = Math.max(1, Math.round(currentLoc));
+      setCurrentPage(currentPageNum);
+      setTotalPages(totalLocs);
+
+      logDebug('Progress updated:', {
+        currentPage: currentPageNum,
+        totalPages: totalLocs,
+        percentage: Math.round((percentage || 0) * 100) + '%',
+        location: currentLoc
+      });
+
+      // Update chapter information
+      if (location.href) {
+        const chapter = book.spine.get(location.href);
+        if (chapter && chapter.label) {
+          setCurrentChapter(chapter.label);
+        } else {
+          const spinePosition = book.spine.spineItems.findIndex(
+            (item: any) => item.href === location.href
+          );
+          setCurrentChapter(`Chapter ${spinePosition + 1}`);
+        }
+      }
+    } catch (err) {
+      logDebug('Error updating progress:', err);
+    }
+  }, [book, rendition, logDebug, onProgressUpdate]);
 
   // Initialize book after scripts are loaded
   useEffect(() => {
@@ -269,7 +317,19 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
 
         // Handle page changes
         newRendition.on('rendered', (section: any) => {
-          updateProgress();
+          // We'll update progress in a safer way that doesn't reference updateProgress
+          try {
+            const location = newRendition.location.start;
+            if (location) {
+              const percentage = newBook.locations.percentageFromCfi(location.cfi);
+              setProgress(percentage || 0);
+              if (onProgressUpdate) {
+                onProgressUpdate(percentage || 0);
+              }
+            }
+          } catch (error) {
+            logDebug('Error in rendered event:', error);
+          }
         });
         
         // Setup event listeners for navigation and display
@@ -321,7 +381,7 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
         book.destroy();
       }
     };
-  }, [scriptsLoaded, url, onProgressUpdate]);
+  }, [scriptsLoaded, url, onProgressUpdate, logDebug, book, rendition]);
 
   // Handler for window resize
   useEffect(() => {
@@ -339,7 +399,7 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [rendition]);
+  }, [rendition, logDebug]);
 
   // Navigation handlers - simplify to the bare minimum
   const handlePrev = () => {
@@ -353,52 +413,6 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
     if (rendition) {
       rendition.next();
       updateProgress();
-    }
-  };
-
-  // Update progress helper function
-  const updateProgress = () => {
-    if (!book || !rendition) return;
-
-    try {
-      const location = rendition.location.start;
-      if (!location) return;
-
-      const currentLoc = book.locations.locationFromCfi(location.cfi);
-      const totalLocs = book.locations.total;
-      const percentage = book.locations.percentageFromCfi(location.cfi);
-
-      setProgress(percentage || 0);
-      if (onProgressUpdate) {
-        onProgressUpdate(percentage || 0);
-      }
-
-      // Calculate current page
-      const currentPageNum = Math.max(1, Math.round(currentLoc));
-      setCurrentPage(currentPageNum);
-      setTotalPages(totalLocs);
-
-      logDebug('Progress updated:', {
-        currentPage: currentPageNum,
-        totalPages: totalLocs,
-        percentage: Math.round((percentage || 0) * 100) + '%',
-        location: currentLoc
-      });
-
-      // Update chapter information
-      if (location.href) {
-        const chapter = book.spine.get(location.href);
-        if (chapter && chapter.label) {
-          setCurrentChapter(chapter.label);
-        } else {
-          const spinePosition = book.spine.spineItems.findIndex(
-            (item: any) => item.href === location.href
-          );
-          setCurrentChapter(`Chapter ${spinePosition + 1}`);
-        }
-      }
-    } catch (err) {
-      logDebug('Error updating progress:', err);
     }
   };
 
@@ -446,6 +460,18 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
       logDebug('Error navigating with slider:', err);
     }
   };
+
+  // Render a different UI if no URL is provided
+  if (!url) {
+    return (
+      <div className={`flex items-center justify-center p-8 ${className}`} style={{ minHeight: '400px' }}>
+        <div className="text-center max-w-md">
+          <h3 className="text-xl font-semibold mb-2">No book available</h3>
+          <p className="text-gray-600">This book doesn't have an associated EPUB file. Please try another book or contact support.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col relative ${className}`}>

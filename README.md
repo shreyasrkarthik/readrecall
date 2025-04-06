@@ -13,7 +13,7 @@ Smart summaries that stop at your bookmark. ReadRecall helps you remember what h
 ## Tech Stack
 
 - **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, FastAPI (for AI processing)
+- **Backend**: Next.js API Routes
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: NextAuth.js with Google provider
 - **Storage**: Cloudinary for file storage
@@ -34,11 +34,15 @@ Smart summaries that stop at your bookmark. ReadRecall helps you remember what h
 
 3. Set up environment variables:
    - Copy `.env.example` to `.env`
+   ```bash
+   cp .env.example .env
+   ```
    - Fill in your environment variables:
-     - Database connection
-     - Authentication credentials
-     - OpenAI API key
-     - Cloudinary credentials
+     - `DATABASE_URL`: PostgreSQL connection string (you can use services like [Neon.tech](https://neon.tech/) for a serverless database)
+     - `NEXTAUTH_SECRET`: Generate with `openssl rand -base64 32`
+     - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: Get from [Google Cloud Console](https://console.cloud.google.com/) (OAuth credentials)
+     - `OPENAI_API_KEY`: Get from [OpenAI](https://platform.openai.com/api-keys)
+     - `CLOUDINARY_*`: Get from [Cloudinary Dashboard](https://cloudinary.com/console/)
 
 4. Initialize the database:
    ```bash
@@ -52,6 +56,28 @@ Smart summaries that stop at your bookmark. ReadRecall helps you remember what h
    ```
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Database Setup
+
+For a quick PostgreSQL setup, we recommend using [Neon.tech](https://neon.tech/), which provides a free serverless PostgreSQL database.
+
+1. Create an account on Neon.tech
+2. Create a new project and database
+3. Get the connection string and add it to your .env file as `DATABASE_URL`
+4. Run the Prisma schema push:
+   ```bash
+   npx prisma db push
+   ```
+
+## Authentication Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or use an existing one)
+3. Navigate to "APIs & Services" > "Credentials"
+4. Create an "OAuth client ID" with:
+   - Authorized JavaScript origins: `http://localhost:3000` (and your production URL)
+   - Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google` (and production equivalent)
+5. Copy the Client ID and Client Secret to your .env file
 
 ## Project Structure
 
@@ -75,14 +101,6 @@ readrecall/
 ├── prisma/                   # Database schema and migrations
 └── public/                   # Static assets
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 

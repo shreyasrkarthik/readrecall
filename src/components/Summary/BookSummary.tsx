@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Summary } from '@/types';
 
 interface BookSummaryProps {
@@ -16,7 +16,8 @@ export function BookSummary({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSummary = async () => {
+  // Make fetchSummary a useCallback to avoid infinite loops when included in dependencies
+  const fetchSummary = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -36,14 +37,14 @@ export function BookSummary({
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId, currentPosition]);
 
   // Auto-fetch summary when position changes
   useEffect(() => {
     if (bookId && currentPosition > 0) {
       fetchSummary();
     }
-  }, [bookId, currentPosition]);
+  }, [bookId, currentPosition, fetchSummary]);
 
   return (
     <div className={`bg-white rounded-lg shadow-lg p-6 ${className}`}>

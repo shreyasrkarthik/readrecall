@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { EPUBReader } from '@/components/BookReader/EPUBReader';
-import { EPUBScript } from '@/components/BookReader/EPUBScript';
 
 // A public domain EPUB for demo purposes - using a reliable source
 const DEMO_EPUB_URL = 'https://standardebooks.org/ebooks/jane-austen/pride-and-prejudice/downloads/pride-and-prejudice_jane-austen.epub';
@@ -32,7 +31,6 @@ export default function DemoPage() {
   
   return (
     <>
-      <EPUBScript />
       <div className="min-h-screen bg-gray-50">
         {isReading ? (
           <div className="flex flex-col h-screen">

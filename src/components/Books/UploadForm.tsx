@@ -60,7 +60,7 @@ export function UploadForm() {
           className="group relative flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100"
         >
           <div className="space-y-2 text-center">
-            <ArrowUpTrayIcon className={`mx-auto h-12 w-12 ${appTheme.light}`} />
+            <ArrowUpTrayIcon className={`mx-auto h-12 w-12 ${appTheme.muted}`} />
             <div className="text-sm text-gray-600">
               <span className={`font-medium ${appTheme.primary} group-hover:${appTheme.hover.replace('hover:', '')}`}>
                 Click to upload
@@ -102,7 +102,7 @@ export function UploadForm() {
       <button
         type="submit"
         disabled={!file || uploading}
-        className={`w-full rounded-md ${appTheme.gradient} px-4 py-2 text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`w-full rounded-md bg-teal-600 px-4 py-2 text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {uploading ? 'Uploading...' : 'Upload Book'}
       </button>

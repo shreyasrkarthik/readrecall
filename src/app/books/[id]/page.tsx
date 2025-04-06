@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { EPUBReader } from '@/components/BookReader/EPUBReader';
-import { EPUBScript } from '@/components/BookReader/EPUBScript';
 import { getBookTheme } from '@/lib/colors';
 import { BookCover } from '@/components/BookCover';
 
@@ -310,7 +309,6 @@ export default function BookPage() {
   
   return (
     <>
-      <EPUBScript />
       {loading ? (
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
