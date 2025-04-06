@@ -43,21 +43,21 @@ MemoizedEPUBReader.displayName = 'MemoizedEPUBReader';
 
 // Create a separate component for the Summary section to isolate state changes
 const SummarySection = memo(({ book, currentPosition }: { book: Book, currentPosition: number }) => {
-  const [showSummary, setShowSummary] = useState(false);
+  console.log('Rendering SummarySection');
+  
   const [summaryContent, setSummaryContent] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
   
-  // Fetch summary when the component mounts or when position changes
+  // Fetch summary when position changes
   useEffect(() => {
-    // Clear any previous errors when position changes
-    setError(null);
-    
     const fetchSummary = async () => {
-      if (!book?.id || !showSummary) return;
+      if (!book?.id) return;
       
       try {
         setLoading(true);
+        setError(null);
         
         console.log(`Fetching summary for book ${book.id} at position ${currentPosition}`);
         
@@ -83,17 +83,16 @@ const SummarySection = memo(({ book, currentPosition }: { book: Book, currentPos
       }
     };
     
-    // If summary is visible, fetch it
-    if (showSummary) {
-      fetchSummary();
-    }
-  }, [book?.id, currentPosition, showSummary]);
+    fetchSummary();
+  }, [book?.id, currentPosition]);
+
   
   // Format the reading progress for display
   const formattedProgress = Math.round((currentPosition / 10000) * 100);
   
-  // Handle toggle click - fetch summary if not already fetched
+  // Handle toggle click
   const handleToggleClick = () => {
+    console.log('Toggle clicked, current showSummary:', showSummary);
     setShowSummary(!showSummary);
   };
   
