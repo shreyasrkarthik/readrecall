@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm run update-vendor",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "setup": "cp -n .env.example .env || true && npm install && npx prisma generate && echo 'Setup complete! Remember to update your .env file with your credentials.'"
+    "setup": "cp -n .env.example .env || true && npm install && npx prisma generate && echo 'Setup complete! Remember to update your .env file with your credentials.'",
+    "update-vendor": "bash scripts/update-vendor-libs.sh"
   },
   "dependencies": {
     "@auth/core": "^0.38.0",

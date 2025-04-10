@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 // Global declaration for TypeScript
 declare global {
@@ -11,8 +11,8 @@ declare global {
 }
 
 // Constants for script URLs
-const JSZIP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-const EPUB_URL = 'https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js';
+const JSZIP_URL = '/vendor/jszip.min.js';
+const EPUB_URL = '/vendor/epub.min.js';
 
 interface EPUBReaderProps {
   url: string;
@@ -21,7 +21,18 @@ interface EPUBReaderProps {
 }
 
 export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReaderProps) {
+  // Convert Cloudinary URLs to use our proxy to avoid CORS issues
+  const proxyUrl = useMemo(() => {
+    if (!url) return '';
+    if (url.includes('cloudinary.com')) {
+      return `/api/proxy/epub?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  }, [url]);
+
   const viewerRef = useRef<HTMLDivElement>(null);
+  const isInitializingRef = useRef<boolean>(false);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
   const [book, setBook] = useState<any>(null);
   const [rendition, setRendition] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +47,8 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
   const [progress, setProgress] = useState<number>(0);
   const [currentChapter, setCurrentChapter] = useState<string>('');
   const [isFooterExpanded, setIsFooterExpanded] = useState<boolean>(false);
+  const touchStartXRef = useRef<number>(0);
+  const touchEndXRef = useRef<number>(0);
 
   // Debug logger function
   const logDebug = useCallback((message: string, obj?: any) => {
@@ -154,20 +167,41 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
 
   // Initialize book after scripts are loaded
   useEffect(() => {
-    if (!scriptsLoaded || !url) return;
+    if (!scriptsLoaded || !proxyUrl) return;
     
     const initializeBook = async () => {
+      // Prevent multiple simultaneous initialization attempts
+      if (isInitializingRef.current) {
+        logDebug('Book initialization already in progress, skipping');
+        return;
+      }
+      
+      isInitializingRef.current = true;
+      
       try {
         setLoading(true);
         setError(null);
         
+        // Clean up any existing book instance before creating a new one
+        if (book) {
+          logDebug('Cleaning up previous book instance');
+          book.destroy();
+          setBook(null);
+          setRendition(null);
+        }
+        
         // Set a timeout for the loading process
-        const timeoutId = setTimeout(() => {
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+        }
+        
+        timeoutIdRef.current = setTimeout(() => {
           setTimeoutWarning(true);
           logDebug('⚠️ Book loading is taking longer than expected');
           // Log diagnostics
           logDebug('Diagnostics:', {
-            url,
+            url: proxyUrl,
+            originalUrl: url,
             scriptsLoaded,
             bookCreated: !!book,
             renditionCreated: !!rendition,
@@ -177,8 +211,16 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
           });
         }, 5000);
 
-        logDebug(`Creating Book from URL: ${url}`);
-        const newBook = window.ePub(url);
+        logDebug(`Creating Book from URL: ${proxyUrl}`);
+        const newBook = window.ePub(proxyUrl, {
+          openAs: 'epub',
+          requestHeaders: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Headers': 'Range',
+            'Accept-Encoding': 'gzip',
+          }
+        });
         setBook(newBook);
         
         logDebug('Book created, waiting for ready state');
@@ -343,32 +385,42 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
         });
         
         // Register touch events for swipe navigation
-        let touchStartX = 0;
-        let touchEndX = 0;
+        const handleTouchStart = (e: TouchEvent) => {
+          touchStartXRef.current = e.changedTouches[0].screenX;
+        };
         
-        viewerRef.current.addEventListener('touchstart', (e: TouchEvent) => {
-          touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-        
-        viewerRef.current.addEventListener('touchend', (e: TouchEvent) => {
-          touchEndX = e.changedTouches[0].screenX;
-          if (touchStartX - touchEndX > 50) {
+        const handleTouchEnd = (e: TouchEvent) => {
+          touchEndXRef.current = e.changedTouches[0].screenX;
+          if (touchStartXRef.current - touchEndXRef.current > 50) {
             newRendition.next();
-          } else if (touchEndX - touchStartX > 50) {
+          } else if (touchEndXRef.current - touchStartXRef.current > 50) {
             newRendition.prev();
           }
-        }, { passive: true });
+        };
         
-        clearTimeout(timeoutId);
+        viewerRef.current.addEventListener('touchstart', handleTouchStart, { passive: true });
+        viewerRef.current.addEventListener('touchend', handleTouchEnd, { passive: true });
+        
+        clearTimeout(timeoutIdRef.current || undefined);
+        timeoutIdRef.current = null;
         setTimeoutWarning(false);
         setLoading(false);
         logDebug('Book fully initialized and displayed 🎉');
         
+        // Return cleanup function for touch events
+        return () => {
+          if (viewerRef.current) {
+            viewerRef.current.removeEventListener('touchstart', handleTouchStart);
+            viewerRef.current.removeEventListener('touchend', handleTouchEnd);
+          }
+        };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Unknown error';
         logDebug(`❌ Error initializing book: ${errorMsg}`);
         setError(`Failed to load book: ${errorMsg}`);
         setLoading(false);
+      } finally {
+        isInitializingRef.current = false;
       }
     };
     
@@ -381,7 +433,7 @@ export function EPUBReader({ url, className = '', onProgressUpdate }: EPUBReader
         book.destroy();
       }
     };
-  }, [scriptsLoaded, url, onProgressUpdate, logDebug, book, rendition]);
+  }, [scriptsLoaded, proxyUrl, onProgressUpdate, logDebug]);
 
   // Handler for window resize
   useEffect(() => {
