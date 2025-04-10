@@ -91,7 +91,7 @@ export default function Navbar() {
               ) : (
                 <div className="flex items-center space-x-4">
                   <button
-                    onClick={() => signIn()}
+                    onClick={() => signIn('google')}
                     className="text-sm font-medium text-black hover:text-teal-500"
                   >
                     Sign in
@@ -189,7 +189,7 @@ export default function Navbar() {
                 <>
                   <button
                     onClick={() => {
-                      signIn();
+                      signIn('google');
                       setIsMenuOpen(false);
                     }}
                     className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:text-teal-500"

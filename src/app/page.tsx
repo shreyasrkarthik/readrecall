@@ -27,7 +27,7 @@ export default async function Home() {
             href="/about"
             className="text-sm font-semibold leading-6 text-teal-600 hover:text-teal-700"
           >
-            Learn more <span aria-hidden="true">→</span>
+            Learn more <span aria-hidden="true" className="text-teal-600">→</span>
           </Link>
         </div>
       </div>
