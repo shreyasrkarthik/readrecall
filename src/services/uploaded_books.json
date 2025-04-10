@@ -1,0 +1,72 @@
+[
+  {
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "coverUrl": null,
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068059/books/book-1342.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "Alice's Adventures in Wonderland",
+    "author": "Lewis Carroll",
+    "coverUrl": null,
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068061/books/book-11.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "Frankenstein",
+    "author": "Mary Wollstonecraft Shelley",
+    "coverUrl": null,
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068062/books/book-84.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "The Adventures of Sherlock Holmes",
+    "author": "Arthur Conan Doyle",
+    "coverUrl": "https://res.cloudinary.com/dxy9yzblm/image/upload/v1742067990/book-covers/cover-1661.jpg",
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068066/books/book-1661.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "The Adventures of Tom Sawyer",
+    "author": "Mark Twain",
+    "coverUrl": "https://res.cloudinary.com/dxy9yzblm/image/upload/v1742067994/book-covers/cover-74.jpg",
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068069/books/book-74.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "Moby Dick",
+    "author": "Herman Melville",
+    "coverUrl": "https://res.cloudinary.com/dxy9yzblm/image/upload/v1742067997/book-covers/cover-2701.jpg",
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068072/books/book-2701.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "The Yellow Wallpaper",
+    "author": "Charlotte Perkins Gilman",
+    "coverUrl": "https://res.cloudinary.com/dxy9yzblm/image/upload/v1742067999/book-covers/cover-1952.jpg",
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068075/books/book-1952.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "A Tale of Two Cities",
+    "author": "Charles Dickens",
+    "coverUrl": "https://res.cloudinary.com/dxy9yzblm/image/upload/v1742068002/book-covers/cover-98.jpg",
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068078/books/book-98.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "The Prince",
+    "author": "Niccol\u00f2 Machiavelli",
+    "coverUrl": "https://res.cloudinary.com/dxy9yzblm/image/upload/v1742068004/book-covers/cover-1232.jpg",
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068081/books/book-1232.epub",
+    "isPublicDomain": true
+  },
+  {
+    "title": "The Picture of Dorian Gray",
+    "author": "Oscar Wilde",
+    "coverUrl": "https://res.cloudinary.com/dxy9yzblm/image/upload/v1742068006/book-covers/cover-174.jpg",
+    "epubUrl": "https://res.cloudinary.com/dxy9yzblm/raw/upload/v1742068083/books/book-174.epub",
+    "isPublicDomain": true
+  }
+]

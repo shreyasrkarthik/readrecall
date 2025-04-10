@@ -39,11 +39,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Python environment
-.venv/
+# Python files
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Logs
 logs
@@ -54,3 +56,10 @@ logs
 .vscode/
 *.swp
 *.swo
+
+*venv
+*.env
+*.env.local
+*.env.development
+*.env.test
+*.env.production

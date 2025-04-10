@@ -82,8 +82,8 @@ export default async function BooksPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Hero section */}
         <div className="mb-12 text-center">
-          <h1 className={`text-4xl font-bold mb-4 ${appTheme.primary} ${appTheme.darkPrimary}`}>
-            Discover Your Next Great Read
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">
+            Your Library
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Explore our collection of {books.length} {books.length === 1 ? 'book' : 'books'} and find your next adventure.
@@ -122,7 +122,7 @@ export default async function BooksPage() {
             {/* Featured books section */}
             {featuredBooks.length > 0 && (
               <div className="mb-12">
-                <h2 className={`text-2xl font-bold ${appTheme.primary} ${appTheme.darkPrimary} mb-6`}>Featured Books</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Books</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {featuredBooks.map((book) => (
                     <HorizontalBookCard key={book.id} book={book} />
@@ -134,7 +134,7 @@ export default async function BooksPage() {
             {/* All books section */}
             {remainingBooks.length > 0 && (
               <div>
-                <h2 className={`text-2xl font-bold ${appTheme.primary} ${appTheme.darkPrimary} mb-6`}>More Books to Explore</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">More Books to Explore</h2>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
                   {remainingBooks.map((book) => (
                     <HorizontalBookCard key={book.id} book={book} />

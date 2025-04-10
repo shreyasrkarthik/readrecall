@@ -5,14 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Logo from './Logo';
-import { getAppTheme, getButtonStyle } from '@/lib/colors';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const appTheme = getAppTheme();
 
   // Handle scroll effect
   useEffect(() => {
@@ -41,7 +39,7 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white dark:bg-gray-900 shadow-md' : 'bg-transparent'
+        scrolled ? 'bg-white shadow-md' : 'bg-transparent'
       } border-b border-black`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,10 +55,10 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors duration-200 ${
+                  className={`text-sm font-medium transition-colors duration-200 relative ${
                     isActive(link.href)
-                      ? `${appTheme.accent} ${appTheme.darkAccent}`
-                      : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                      ? 'text-teal-900 after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-0.5 after:bg-teal-900'
+                      : 'text-black hover:text-teal-500'
                   }`}
                 >
                   {link.name}
@@ -71,12 +69,12 @@ export default function Navbar() {
             {/* Authentication */}
             <div className="flex items-center space-x-4">
               {status === 'loading' ? (
-                <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
               ) : session ? (
                 <div className="flex items-center space-x-4">
                   <Link
                     href="/profile"
-                    className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    className="flex items-center space-x-2 text-sm font-medium text-black hover:text-teal-500"
                   >
                     <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white">
                       {session.user?.name?.charAt(0) || 'U'}
@@ -85,7 +83,7 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={() => signOut()}
-                    className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    className="text-sm font-medium text-black hover:text-teal-500"
                   >
                     Sign out
                   </button>
@@ -94,13 +92,13 @@ export default function Navbar() {
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={() => signIn()}
-                    className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    className="text-sm font-medium text-black hover:text-teal-500"
                   >
                     Sign in
                   </button>
                   <Link
                     href="/register"
-                    className="rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm bg-black hover:bg-gray-800 dark:bg-black dark:hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                    className="rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm bg-black hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
                   >
                     Sign up
                   </Link>
@@ -113,7 +111,7 @@ export default function Navbar() {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-black hover:text-teal-500 focus:outline-none"
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
@@ -147,16 +145,16 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900 shadow-lg">
+        <div className="md:hidden bg-white shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                className={`block px-3 py-2 rounded-md text-base font-medium relative ${
                   isActive(link.href)
-                    ? `${appTheme.accent} ${appTheme.darkAccent}`
-                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                    ? 'text-teal-900 after:absolute after:bottom-0 after:left-3 after:w-[calc(100%-1.5rem)] after:h-0.5 after:bg-teal-900'
+                    : 'text-black hover:text-teal-500'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -164,21 +162,21 @@ export default function Navbar() {
               </Link>
             ))}
           </div>
-          <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="px-2 space-y-1">
               {status === 'loading' ? (
-                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
               ) : session ? (
                 <>
                   <div className="px-3 py-2 flex items-center space-x-3">
                     <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white">
                       {session.user?.name?.charAt(0) || 'U'}
                     </div>
-                    <span className="text-gray-700 dark:text-gray-300">{session.user?.name || 'User'}</span>
+                    <span className="text-black">{session.user?.name || 'User'}</span>
                   </div>
                   <Link
                     href="/profile"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-black hover:text-teal-500"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Profile
@@ -188,7 +186,7 @@ export default function Navbar() {
                       signOut();
                       setIsMenuOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:text-gray-500"
                   >
                     Sign out
                   </button>
@@ -200,13 +198,13 @@ export default function Navbar() {
                       signIn();
                       setIsMenuOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:text-teal-500"
                   >
                     Sign in
                   </button>
                   <Link
                     href="/register"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-white bg-black hover:bg-gray-800 dark:bg-black dark:hover:bg-gray-800"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-white bg-black hover:bg-gray-800"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Sign up

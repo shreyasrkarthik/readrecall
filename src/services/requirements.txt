@@ -1,0 +1,6 @@
+requests==2.31.0
+python-dotenv==1.0.1
+cloudinary==1.39.0
+EbookLib==0.18
+Pillow==10.2.0
+prisma==0.13.0 
