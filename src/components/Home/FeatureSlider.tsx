@@ -80,10 +80,10 @@ export default function FeatureSlider() {
   return (
     <div className="w-full max-w-5xl mx-auto mt-16 px-4">
       <div className="text-center mb-10">
-        <h2 className={`text-2xl font-bold ${appTheme.primary} ${appTheme.darkPrimary}`}>
+        <h2 className="text-2xl font-bold text-gray-900">
           Powerful Features
         </h2>
-        <div className="w-20 h-1 mx-auto mt-2 bg-black rounded-full"></div>
+        <div className="w-20 h-1 mx-auto mt-2 bg-teal-600 rounded-full"></div>
       </div>
       
       <div className="hidden md:block">
