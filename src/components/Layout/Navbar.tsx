@@ -96,12 +96,6 @@ export default function Navbar() {
                   >
                     Sign in
                   </button>
-                  <Link
-                    href="/register"
-                    className="rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-sm bg-black hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
-                  >
-                    Sign up
-                  </Link>
                 </div>
               )}
             </div>
@@ -202,13 +196,6 @@ export default function Navbar() {
                   >
                     Sign in
                   </button>
-                  <Link
-                    href="/register"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-white bg-black hover:bg-gray-800"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign up
-                  </Link>
                 </>
               )}
             </div>
