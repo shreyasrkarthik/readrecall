@@ -16,8 +16,8 @@ interface BookCardProps {
 
 export function BookCard({ book }: BookCardProps) {
   const readingState = book.readingStates[0];
-  // Calculate progress from position (assuming position ranges from 0 to 10000)
-  const progress = readingState ? Math.min(Math.round((readingState.position / 10000) * 100), 100) : 0;
+  // Calculate progress from position (assuming position ranges from 0 to 20000)
+  const progress = readingState ? Math.min(Math.round((readingState.position / 20000) * 100), 100) : 0;
   
   // Get the consistent theme for this book
   const theme = getBookTheme(book.title);

@@ -87,7 +87,7 @@ const SummarySection = memo(({ book, currentPosition }: { book: Book, currentPos
 
   
   // Format the reading progress for display
-  const formattedProgress = Math.round((currentPosition / 10000) * 100);
+  const formattedProgress = Math.round((currentPosition / 20000) * 100);
   
   // Handle toggle click
   const handleToggleClick = () => {
@@ -157,7 +157,7 @@ const CharactersSection = memo(({ book, currentPosition }: { book: Book | null, 
   const [showCharacters, setShowCharacters] = useState(false);
   
   // Format the reading progress for display
-  const formattedProgress = Math.round((currentPosition / 10000) * 100);
+  const formattedProgress = Math.round((currentPosition / 20000) * 100);
   
   // Handle toggle click
   const handleToggleClick = () => {
@@ -302,7 +302,7 @@ export default function BookPage() {
     if (book) {
       // Estimate position based on progress percentage
       // This is a simplification - ideally we would get the actual position from the reader
-      const estimatedPosition = Math.round(progress * 10000); // Scale to a reasonable number
+      const estimatedPosition = Math.round(progress * 20000); // Scale to a reasonable number
       setCurrentPosition(estimatedPosition);
     }
   }, [book]);

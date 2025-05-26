@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { useAuth } from '@/lib/context/AuthContext';
 import Logo from './Logo';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -68,34 +68,34 @@ export default function Navbar() {
 
             {/* Authentication */}
             <div className="flex items-center space-x-4">
-              {status === 'loading' ? (
+              {isLoading ? (
                 <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
-              ) : session ? (
+              ) : isAuthenticated && user ? (
                 <div className="flex items-center space-x-4">
                   <Link
                     href="/profile"
                     className="flex items-center space-x-2 text-sm font-medium text-black hover:text-teal-500"
                   >
                     <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white">
-                      {session.user?.name?.charAt(0) || 'U'}
+                      {user?.name?.charAt(0) || 'U'}
                     </div>
-                    <span className="hidden lg:inline">{session.user?.name || 'User'}</span>
+                    <span className="hidden lg:inline">{user?.name || 'User'}</span>
                   </Link>
                   <button
-                    onClick={() => signOut()}
+                    onClick={() => logout()}
                     className="text-sm font-medium text-black hover:text-teal-500"
                   >
                     Sign out
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => signIn('google')}
-                    className="text-sm font-medium text-black hover:text-teal-500"
+                <div className="flex items-center">
+                  <Link
+                    href="/auth"
+                    className="text-sm font-medium bg-black text-white hover:bg-teal-600 px-4 py-2 rounded-md transition-colors"
                   >
-                    Sign in
-                  </button>
+                    Join ReadRecall
+                  </Link>
                 </div>
               )}
             </div>
@@ -158,15 +158,15 @@ export default function Navbar() {
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="px-2 space-y-1">
-              {status === 'loading' ? (
+              {isLoading ? (
                 <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-              ) : session ? (
+              ) : isAuthenticated && user ? (
                 <>
                   <div className="px-3 py-2 flex items-center space-x-3">
                     <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white">
-                      {session.user?.name?.charAt(0) || 'U'}
+                      {user?.name?.charAt(0) || 'U'}
                     </div>
-                    <span className="text-black">{session.user?.name || 'User'}</span>
+                    <span className="text-black">{user?.name || 'User'}</span>
                   </div>
                   <Link
                     href="/profile"
@@ -177,7 +177,7 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={() => {
-                      signOut();
+                      logout();
                       setIsMenuOpen(false);
                     }}
                     className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:text-gray-500"
@@ -187,15 +187,13 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <button
-                    onClick={() => {
-                      signIn('google');
-                      setIsMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-black hover:text-teal-500"
+                  <Link
+                    href="/auth"
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-black text-white hover:bg-teal-600"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    Sign in
-                  </button>
+                    Join ReadRecall
+                  </Link>
                 </>
               )}
             </div>

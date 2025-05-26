@@ -1,19 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
-    const { data: session, status } = useSession();
+    const { user, isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
     const [importing, setImporting] = useState(false);
     const [results, setResults] = useState<any>(null);
 
     // Redirect if not authenticated
-    if (status === 'unauthenticated') {
-        router.push('/api/auth/signin');
-        return null;
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            router.push('/');
+        }
+    }, [isAuthenticated, isLoading, router]);
+
+    if (isLoading) {
+        return <div className="container mx-auto p-4">Loading...</div>;
+    }
+
+    if (!user || user.role !== 'admin') {
+        return <div className="container mx-auto p-4">Unauthorized access</div>;
     }
 
     const handleImport = async () => {

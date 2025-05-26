@@ -1,6 +1,10 @@
-import NextAuth from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { NextResponse } from 'next/server';
 
-const handler = NextAuth(authOptions);
+// Redirect users to our new auth system
+export function GET() {
+  return NextResponse.redirect(new URL('/auth', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'));
+}
 
-export { handler as GET, handler as POST }; 
+export function POST() {
+  return NextResponse.redirect(new URL('/auth', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'));
+} 
