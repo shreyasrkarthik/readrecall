@@ -25,14 +25,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize auth state from localStorage on component mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
-      setIsAuthenticated(true);
-      getProfile();
-    } else {
-      setIsLoading(false);
-    }
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('auth_token');
+      if (!storedToken) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        // Set a timeout for the profile fetch
+        const profilePromise = apiGetProfile(storedToken);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Profile fetch timed out')), 3000)
+        );
+        
+        // Race the profile fetch against a timeout
+        const userData = await Promise.race([profilePromise, timeoutPromise]);
+        
+        setToken(storedToken);
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Auth initialization failed:', error);
+        // Clear invalid token
+        localStorage.removeItem('auth_token');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -94,16 +116,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getProfile = async (): Promise<void> => {
-    if (!token) return;
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
       const userData = await apiGetProfile(token);
+      if (!userData || !userData.id) {
+        throw new Error('Invalid user data received');
+      }
       setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Profile fetch error:', error);
-      // If token is invalid, logout the user
+      // Clear auth state on error
       logout();
     } finally {
       setIsLoading(false);
