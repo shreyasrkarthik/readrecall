@@ -1,23 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import LoginForm from '@/components/Auth/LoginForm';
 import RegisterForm from '@/components/Auth/RegisterForm';
 import { useSearchParams } from 'next/navigation';
 
-export default function AuthPage() {
+export const dynamic = 'force-dynamic';
+
+function AuthContent() {
   const searchParams = useSearchParams();
   const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
   const [authMode, setAuthMode] = useState<'login' | 'register'>(initialMode);
   const [error, setError] = useState<string | null>(null);
-  
-  // Handle error parameters from URL
+
   useEffect(() => {
     const errorParam = searchParams.get('error');
     const messageParam = searchParams.get('message');
-    
+
     if (errorParam) {
-      // Set appropriate error message based on error type
       if (messageParam) {
         setError(decodeURIComponent(messageParam));
       } else if (errorParam === 'google_auth_failed') {
@@ -45,7 +45,7 @@ export default function AuthPage() {
               <div className="font-medium">{error}</div>
             </div>
           )}
-          
+
           {/* Toggle Buttons */}
           <div className="bg-white p-1 rounded-lg shadow-sm flex mb-6">
             <button
