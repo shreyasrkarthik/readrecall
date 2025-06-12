@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // This route handles the Google OAuth callback
 // It simply redirects to our actual handler in the proxy API
 export async function GET(request: NextRequest) {

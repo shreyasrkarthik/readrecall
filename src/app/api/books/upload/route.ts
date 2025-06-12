@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
 import { uploadFile } from '@/lib/cloudinary';
