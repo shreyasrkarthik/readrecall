@@ -27,9 +27,9 @@ export default function AuthSuccessPage() {
             
             // Update auth context
             setToken(token);
-            
-            // Fetch user profile
-            await getProfile();
+
+            // Fetch user profile using the newly set token
+            await getProfile(token);
             
             // Redirect to the specified path
             router.push(redirectPath);
