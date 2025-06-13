@@ -11,7 +11,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  getProfile: () => Promise<void>;
+  getProfile: (overrideToken?: string) => Promise<void>;
   setToken: (token: string) => void;
 };
 
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Otherwise, fetch the user profile
         console.log('AuthContext: No user data in login response, fetching profile...');
-        await getProfile();
+        await getProfile(data.token);
       }
 
       return true;
@@ -115,15 +115,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getProfile = async (): Promise<void> => {
-    if (!token) {
+  const getProfile = async (overrideToken?: string): Promise<void> => {
+    const authToken = overrideToken || token;
+    if (!authToken) {
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
-      const userData = await apiGetProfile(token);
+      const userData = await apiGetProfile(authToken);
       if (!userData || !userData.id) {
         throw new Error('Invalid user data received');
       }
