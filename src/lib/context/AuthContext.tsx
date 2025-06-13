@@ -11,8 +11,9 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  getProfile: () => Promise<void>;
+  getProfile: (overrideToken?: string) => Promise<void>;
   setToken: (token: string) => void;
+  setUser: (user: User | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('auth_user');
       if (!storedToken) {
         setIsLoading(false);
         return;
@@ -35,20 +37,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Set a timeout for the profile fetch
         const profilePromise = apiGetProfile(storedToken);
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Profile fetch timed out')), 3000)
         );
-        
+
         // Race the profile fetch against a timeout
         const userData = await Promise.race([profilePromise, timeoutPromise]);
-        
+
         setToken(storedToken);
         setUser(userData);
         setIsAuthenticated(true);
+        localStorage.setItem('auth_user', JSON.stringify(userData));
       } catch (error) {
         console.error('Auth initialization failed:', error);
-        // Clear invalid token
-        localStorage.removeItem('auth_token');
+        // If we have cached user data, use it instead of logging out
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            setToken(storedToken);
+            setUser(parsed);
+            setIsAuthenticated(true);
+          } catch (e) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+          }
+        } else {
+          // Clear invalid token when no fallback user
+          localStorage.removeItem('auth_token');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -83,10 +99,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         console.log('AuthContext: Setting user data from login response:', data.user);
         setUser(data.user);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
       } else {
         // Otherwise, fetch the user profile
         console.log('AuthContext: No user data in login response, fetching profile...');
-        await getProfile();
+        await getProfile(data.token);
       }
 
       return true;
@@ -115,20 +132,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getProfile = async (): Promise<void> => {
-    if (!token) {
+  const getProfile = async (overrideToken?: string): Promise<void> => {
+    const authToken = overrideToken || token;
+    if (!authToken) {
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
-      const userData = await apiGetProfile(token);
+      const userData = await apiGetProfile(authToken);
       if (!userData || !userData.id) {
         throw new Error('Invalid user data received');
       }
       setUser(userData);
       setIsAuthenticated(true);
+      localStorage.setItem('auth_user', JSON.stringify(userData));
     } catch (error) {
       console.error('Profile fetch error:', error);
       // Clear auth state on error
@@ -141,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     // Clear token from localStorage
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
     
     // Reset auth state
     setToken(null);
@@ -160,6 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         getProfile,
         setToken,
+        setUser,
       }}
     >
       {children}

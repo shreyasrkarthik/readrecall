@@ -7,7 +7,7 @@ import LoadingBook from '@/components/LoadingBook';
 
 export default function AuthSuccessPage() {
   const router = useRouter();
-  const { setToken, getProfile } = useAuth();
+  const { setToken, setUser, getProfile } = useAuth();
 
   useEffect(() => {
     const handleAuthSuccess = async () => {
@@ -17,6 +17,9 @@ export default function AuthSuccessPage() {
           const hash = window.location.hash.substring(1); // Remove the # character
           const params = new URLSearchParams(hash);
           const token = params.get('token');
+          const userId = params.get('id');
+          const name = params.get('name');
+          const email = params.get('email');
           const redirectPath = params.get('redirect') || '/profile';
 
           if (token) {
@@ -27,9 +30,16 @@ export default function AuthSuccessPage() {
             
             // Update auth context
             setToken(token);
-            
-            // Fetch user profile
-            await getProfile();
+
+            // If we received user info in the hash, use it to initialise state
+            if (userId && name && email) {
+              const userData = { id: userId, name, email, role: 'user' };
+              setUser(userData);
+              localStorage.setItem('auth_user', JSON.stringify(userData));
+            } else {
+              // Fetch user profile using the newly set token
+              await getProfile(token);
+            }
             
             // Redirect to the specified path
             router.push(redirectPath);

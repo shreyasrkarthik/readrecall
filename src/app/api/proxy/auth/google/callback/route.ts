@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
         password: generatedPassword
       }),
     });
-    
+
     const authData = await loginResponse.json();
     
     if (!loginResponse.ok) {
@@ -136,12 +136,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(`/auth?error=google_auth_failed&message=${encodeURIComponent(authData.message || 'Authentication failed')}`, request.url));
     }
     
+    // Fetch the user profile with the returned token so we can pass
+    // the essential user info directly to the client. This avoids a
+    // second request immediately after redirecting.
+    const profileResponse = await fetch('https://hgtv5vd4n3.execute-api.us-east-1.amazonaws.com/prod/user/me', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authData.token}`,
+      },
+    });
+
+    const profileData = await profileResponse.json();
+
+    if (!profileResponse.ok) {
+      console.error('Failed to fetch profile after login:', profileData);
+      return NextResponse.redirect(new URL('/auth?error=profile_fetch_failed', request.url));
+    }
+
     // Store token in localStorage on client side via a redirect with hash fragment
-    // This matches how the regular login works
-    
-    // Create URL with token in hash (not sent to server)
+    // Include basic user info so the client can initialise auth state without another fetch
     const successUrl = new URL('/auth-success', request.url);
-    successUrl.hash = `token=${authData.token}&redirect=/profile`;
+    successUrl.hash =
+      `token=${authData.token}` +
+      `&id=${encodeURIComponent(profileData.id)}` +
+      `&name=${encodeURIComponent(profileData.name)}` +
+      `&email=${encodeURIComponent(profileData.email)}` +
+      `&redirect=/profile`;
     
     console.log('Authentication successful, redirecting to:', successUrl.pathname);
     const response = NextResponse.redirect(successUrl);
